@@ -72,5 +72,6 @@ submission['석식계'] = pred2
 
 submission.to_csv('../data/DACON/cafeteria_prediction/sub/0718_baseline.csv', index=False)
 
+# 0718_baseline.csv
 # 121.83433
 
