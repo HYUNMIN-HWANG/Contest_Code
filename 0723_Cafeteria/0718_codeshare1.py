@@ -95,7 +95,6 @@ from xgboost import XGBRegressor
 params = {
     'learning_rate': [0.0, 0.1, 0.09, 0.089, 0.08],
     'boosting_type': ['gbtree', 'gblinear', 'dart'],
-    
 }
 
 lunch_r = XGBRegressor(objective='reg:squarederror')
