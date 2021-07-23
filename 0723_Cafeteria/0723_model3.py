@@ -61,6 +61,7 @@ from xgboost import XGBRegressor
 from sklearn.model_selection import GridSearchCV
 from mlxtend.regressor import StackingCVRegressor
 from sklearn.linear_model import Lasso
+import xgboost as xgb
 
 RANDOM_SEED = 2021
 PROBAS = True
@@ -70,58 +71,15 @@ lasso = Lasso()
 
 # 대회 규칙
 # 평가산식 : MAE(Mean Absolute Error)
-lunch_model = RandomForestRegressor(criterion='mae')
-dinner_model = RandomForestRegressor(criterion='mae')
-
 
 XGB_params = {
     'learning_rate': [0.0, 0.1, 0.09, 0.089, 0.08]
 }
 
-lgb_params = {
-    'metric': 'l1',
-    'n_estimators': N_ESTIMATORS,
-    'objective': 'regression',
-    'random_state': RANDOM_SEED,
-    'learning_rate': 0.01,
-    'min_child_samples': 150,
-    'reg_alpha': 3e-5,
-    'reg_lambda': 9e-2,
-    'num_leaves': 20,
-    'max_depth': 16,
-    'colsample_bytree': 0.8,
-    'subsample': 0.8,
-    'subsample_freq': 2,
-    'max_bin': 240,
-}
-
-ctb_params = {
-    'bootstrap_type': 'Poisson',
-    'loss_function': 'MAE',
-    'eval_metric': 'MAE',
-    'random_seed': RANDOM_SEED,
-    'task_type': 'GPU',
-    'max_depth': 8,
-    'learning_rate': 0.01,
-    'n_estimators': N_ESTIMATORS,
-    'max_bin': 280,
-    'min_data_in_leaf': 64,
-    'l2_leaf_reg': 0.01,
-    'subsample': 0.8
-}
-
-rf_params = {
-    'max_depth': 15,
-    'min_samples_leaf': 8,
-    'random_state': RANDOM_SEED
-}
-
-
 # 결과를 임시로 저장할 프레임
 temp_result = pd.DataFrame(index=['일자','중식계','석식계','요일'])
 print(temp_result.shape)
 print(temp_result)
-
 
 lunch_r = XGBRegressor(objective='reg:squarederror')
 dinner_r = XGBRegressor(objective='reg:squarederror')
@@ -138,11 +96,17 @@ dinner_LGBM = LGBMRegressor(n_estimators=1000)
 lunch_KN = KNeighborsRegressor(n_neighbors = 1)
 dinner_KN = KNeighborsRegressor(n_neighbors = 1)
 
-lunch_stack = StackingCVRegressor(regressors=(lunch_model, lunch_cat, lunch_LGBM, lunch_KN),
+lunch_xgb = xgb.XGBRegressor(n_esimators=1000)
+dinner_xgb = xgb.XGBRegressor(n_esimators=1000)
+
+lunch_rfr = RandomForestRegressor(criterion='mae',n_jobs=-1, random_state=42)
+dinner_rfr = RandomForestRegressor(criterion='mae',n_jobs=-1, random_state=42)
+
+lunch_stack = StackingCVRegressor(regressors=(lunch_model, lunch_cat, lunch_LGBM, lunch_KN, lunch_xgb, lunch_rfr),
                             meta_regressor=lasso,
                             random_state=RANDOM_SEED)
 
-dinner_stack = StackingCVRegressor(regressors=(dinner_model, dinner_cat, dinner_LGBM, dinner_KN),
+dinner_stack = StackingCVRegressor(regressors=(dinner_model, dinner_cat, dinner_LGBM, dinner_KN, dinner_xgb, dinner_rfr),
                             meta_regressor=lasso,
                             random_state=RANDOM_SEED)                            
 
@@ -170,18 +134,18 @@ submission['석식계'] = y_pred
 
 print("=========================================")
 
-submission.to_csv('../data/DACON/cafeteria_prediction/sub/0723_submit2.csv', index=False)
+submission.to_csv('../data/DACON/cafeteria_prediction/sub/0723_submit3.csv', index=False)
 print(submission.shape)   # (50, 3)
 print(submission.head())
 #            일자          중식계         석식계
-# 0  2021-01-27  1004.095331  201.362238
-# 1  2021-01-28   960.199459  506.953550
-# 2  2021-01-29   593.151375  221.889561
-# 3  2021-02-01  1222.241739  566.484026
-# 4  2021-02-02  1067.820807  573.230298
+# 0  2021-01-27  1002.767662  194.882100
+# 1  2021-01-28   956.107734  498.568662
+# 2  2021-01-29   599.198342  232.690510
+# 3  2021-02-01  1227.568565  559.975478
+# 4  2021-02-02  1069.583782  574.543574
 
 
 print(" 💯💯💯💯 Done!!! ") 
 
-# 0723_submit2.csv
-# 65.6802791843	
+# 0723_submit3.csv
+# 68.4240276214
